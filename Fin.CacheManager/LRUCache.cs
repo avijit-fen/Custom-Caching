@@ -167,6 +167,7 @@ namespace Fin.CacheManager
                     {
                         lruList.Remove(key);
                         LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(item);
+                        cacheMap[key] = cacheItem;
                         LinkedListNode<K> newnode = new LinkedListNode<K>(key);
                         lruList.AddLast(newnode);
                         _logger?.Info("Cache Hit:" + key);
@@ -213,6 +214,7 @@ namespace Fin.CacheManager
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.Synchronized)]
         public K remove(K key)
         {
                 if (cacheMap.TryGetValue(key, out var existingNode))

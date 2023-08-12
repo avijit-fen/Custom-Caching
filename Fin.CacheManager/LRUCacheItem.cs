@@ -25,6 +25,7 @@ namespace Fin.CacheManager
             value = cacheItem.value;
             CachePolicyItem = cacheItem.CachePolicyItem; 
             InternalKey = cacheItem.InternalKey;
+            setExpiry(CachePolicyItem);
         }
         public K key;
         public V value;

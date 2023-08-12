@@ -14,7 +14,7 @@ namespace LRUCacheApp
             var cache = LRUCache<int, string>.GetInstance(5);
             cache.OnEviction += Eviction_Event;
 
-            List<int> list = Enumerable.Range(1, 20).ToList();
+            List<int> list = Enumerable.Range(1, 500).ToList();
             var random = new Random();
             // checking with Mutithreading if cache works fine
             Parallel.ForEach(list, new ParallelOptions() { MaxDegreeOfParallelism = 10 }, i =>
@@ -26,10 +26,11 @@ namespace LRUCacheApp
 
                 int r1 = random.Next(list.Count);
                 var itemget = cache.get(r1);
-                Console.WriteLine(itemget + "at:" + r1);
+                Console.WriteLine(itemget + " at: " + r1);
 
             });
 
+            var c = cache;
             
             Console.ReadLine();
 
