@@ -39,13 +39,14 @@ namespace Fin.CacheManager
             {
                 this.capacity = capacity;
                 this.lruList = new LinkedList<K>();
-                var cts = new CancellationToken();
+                // standard .net strategy implementation - every 20 sec remove expire items
+            var cts = new CancellationToken();
 
                         RecurringTask(()=>
                         {
                             DeleteIfExpired();
 
-                        }, 2, cts);
+                        }, 20, cts);
             }
             /// <summary>
             /// Overloaded Constuctor with Logger , use dependency injection to implement your logger
@@ -57,14 +58,14 @@ namespace Fin.CacheManager
                 this.capacity = capacity;
                 this.lruList = new LinkedList<K>();
                 this._logger = logger;
-                
+                // standard .net strategy implementation - every 20 sec remove expire items
                 var cts = new CancellationToken();
 
                         RecurringTask(()=>
                         {
                             DeleteIfExpired();
 
-                        }, 2, cts);
+                        }, 20, cts);
 
             }
             /// <summary>

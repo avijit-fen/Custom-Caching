@@ -107,13 +107,15 @@ namespace Fin.CacheManager.Tests
         {
             var cache = LRUCache<int, string>.GetInstance(5);
 
-            cache.add(1,"A",new CachePolicy() { CachePolicyType = CachePolicyType.SlidingExpiration , SlidingExpiration = TimeSpan.FromSeconds(10) });
+            cache.add(1,"A",new CachePolicy() { CachePolicyType = CachePolicyType.SlidingExpiration , SlidingExpiration = TimeSpan.FromSeconds(120) });
             
             cache.OnEviction += Eviction_Event2;
 
-            Thread.Sleep(11 * 1000);
+            Thread.Sleep(1000);
 
-            
+            var r = cache.get(1);
+
+            var c = cache;
 
         }
 
