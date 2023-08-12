@@ -30,7 +30,7 @@ namespace LRUCacheApp
 
             });
 
-            var c = cache;
+            
             
             Console.ReadLine();
 

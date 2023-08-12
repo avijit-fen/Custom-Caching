@@ -115,8 +115,6 @@ namespace Fin.CacheManager.Tests
 
             var r = cache.get(1);
 
-            var c = cache;
-
         }
 
         private void Eviction_Event2(object sender, EvictionArgs<int> e)
