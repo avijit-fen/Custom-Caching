@@ -106,7 +106,7 @@ namespace Fin.CacheManager
         /// </summary>
         private void DeleteIfExpired()
         {
-            Console.WriteLine("Checking delete if expired:" + Thread.CurrentThread.ManagedThreadId);
+            _logger?.Info("Checking delete if expired:" + Thread.CurrentThread.ManagedThreadId);
             if(cacheMap == null) { return; }
 
                 foreach(var item in cacheMap.Keys) 
@@ -115,7 +115,7 @@ namespace Fin.CacheManager
                     var cacheitem = cacheObj.Value;
                     if(cacheitem  != null && cacheitem.Expired != null) 
                     {
-                        Console.WriteLine(cacheitem.Expired + " " + DateTime.Now);
+                        _logger?.Info(cacheitem.Expired + " " + DateTime.Now);
                         if(cacheitem.Expired >= DateTime.Now) {
                         OnEviction?.Invoke(this, new EvictionArgs<K> { Key = item, EvictionReason = "Expired time Exceeded" });
                         remove(item); 

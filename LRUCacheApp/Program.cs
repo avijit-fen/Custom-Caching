@@ -22,7 +22,7 @@ namespace LRUCacheApp
                 int r = random.Next(list.Count);
                 string item = r + "_" + "CacheItem";
                 Console.WriteLine("trying to add Key:" +  r);
-                cache.add(r, item , new CachePolicy() { CachePolicyType = CachePolicyType.SlidingExpiration , SlidingExpiration = TimeSpan.FromSeconds(10)});
+                cache.add(r, item , new CachePolicy() { CachePolicyType = CachePolicyType.None });
             });
 
             Console.ReadLine();
@@ -32,7 +32,7 @@ namespace LRUCacheApp
         private static void Eviction_Event(object sender, EvictionArgs<int> e)
         {
             Console.WriteLine("Evicted Key:" + e.Key);
-            Console.WriteLine("Evicted Reason" + e.EvictionReason);
+            Console.WriteLine("Evicted Reason:" + e.EvictionReason);
         }
 
         
