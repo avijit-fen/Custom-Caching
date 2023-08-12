@@ -1,0 +1,16 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/CacheTests/bin/Debug
+/CacheTests/obj/Debug
+/Fin.CacheManager/bin/Debug
+/Fin.CacheManager/obj/Debug
+/Fin.Logger/bin/Debug
+/Fin.Logger/obj/Debug
+/LRUCacheApp/.vs/LRUCacheApp
+/LRUCacheApp/bin/Debug
+/LRUCacheApp/obj/Debug
+/LRUCacheApp/packages
+/packages
+/.vs
