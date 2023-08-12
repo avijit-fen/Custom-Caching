@@ -46,6 +46,7 @@
     <Compile Include="LRUCache.cs" />
     <Compile Include="LRUCacheItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ThrowHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fin.Logger\Fin.Logger.csproj">

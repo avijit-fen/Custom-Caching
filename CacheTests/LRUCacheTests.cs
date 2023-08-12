@@ -96,7 +96,7 @@ namespace Fin.CacheManager.Tests
         {
             var cache = LRUCache<int, string>.GetInstance(5);
 
-            var k = cache.get(1);
+            var k = cache.get(100);
 
             Assert.AreEqual(null, k);
 

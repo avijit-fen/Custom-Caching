@@ -15,5 +15,10 @@ namespace Fin.Logger
         void Warn(string message);
         void Error(string message,Exception e);
         void Fatal(string message , Exception e);
+
+        bool IsDebugEnabled();
+        bool IsInfoEnabled();
+        bool IsWarnEnabled();
+        bool IsErrorEnabled();
     }
 }

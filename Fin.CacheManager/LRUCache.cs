@@ -21,15 +21,16 @@ namespace Fin.CacheManager
         {
             private int capacity;
             //concurrent dictionary to store cache object
-            private ConcurrentDictionary<K, LinkedListNode<LRUCacheItem<K, V>>> cacheMap = new ConcurrentDictionary<K, LinkedListNode<LRUCacheItem<K, V>>>();
+            private ConcurrentDictionary<K, LRUCacheItem<K, V>> cacheMap = new ConcurrentDictionary<K, LRUCacheItem<K, V>>();
             // Linked list used to track LRU algorithm
-            private LinkedList<LRUCacheItem<K, V>> lruList = new LinkedList<LRUCacheItem<K, V>>();
+            private LinkedList<K> lruList;
             private static readonly object Instancelock = new object();
             private static LRUCache<K,V> Instance = null;
             private ILogger _logger;
             //subscribe to this event to know which key got evicted
             public EventHandler<EvictionArgs<K>> OnEviction;
-            
+            private bool _disposed;
+
             /// <summary>
             /// Constructor
             /// </summary>
@@ -37,6 +38,7 @@ namespace Fin.CacheManager
             LRUCache(int capacity)
             {
                 this.capacity = capacity;
+                this.lruList = new LinkedList<K>();
                 var cts = new CancellationToken();
 
                         RecurringTask(()=>
@@ -53,6 +55,7 @@ namespace Fin.CacheManager
             LRUCache(int capacity, ILogger logger)
             {
                 this.capacity = capacity;
+                this.lruList = new LinkedList<K>();
                 this._logger = logger;
                 
                 var cts = new CancellationToken();
@@ -111,15 +114,14 @@ namespace Fin.CacheManager
 
                 foreach(var item in cacheMap.Keys) 
                 {
-                    var cacheObj = cacheMap[item];
-                    var cacheitem = cacheObj.Value;
-                    if(cacheitem  != null && cacheitem.Expired != null) 
+                    var cacheitem = cacheMap[item];
+                    
+                    if(cacheitem  != null && cacheitem.IsExpired) 
                     {
                         _logger?.Info(cacheitem.Expired + " " + DateTime.Now);
-                        if(cacheitem.Expired >= DateTime.Now) {
                         OnEviction?.Invoke(this, new EvictionArgs<K> { Key = item, EvictionReason = "Expired time Exceeded" });
                         remove(item); 
-                        }
+                        
                     }
                 }
         }
@@ -150,44 +152,37 @@ namespace Fin.CacheManager
         [MethodImpl(MethodImplOptions.Synchronized)]
             public V get(K key)
             {
-                LinkedListNode<LRUCacheItem<K, V>> node;
-                if (cacheMap.TryGetValue(key, out node))
+  
+                ThrowHelper.IfNullThrow(key);
+                LRUCacheItem<K,V> item;
+                if (cacheMap.TryGetValue(key, out item))
                 {
-                    V value = node.Value.value;
-                    lruList.Remove(node);
-                    lruList.AddLast(node);
-                    _logger?.Info("Cache Hit:" + key);
-                    return value;
+                    V value = item.value;
+                    if (item.IsExpired) { 
+                        remove(item.key);
+                        OnEviction?.Invoke(this, new EvictionArgs<K> { Key = item.key, EvictionReason = "Item Expiry Exceeded" });
+                        return default(V);
+                     }
+                    else
+                    {
+                        lruList.Remove(key);
+                        LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(item);
+                        LinkedListNode<K> newnode = new LinkedListNode<K>(key);
+                        lruList.AddLast(newnode);
+                        _logger?.Info("Cache Hit:" + key);
+                        CacheStats.HitCount++;
+                        return value;
+                    }
                 }
                 else
                 {
                     _logger?.Info("Cache Miss:" + key);
+                    CacheStats.MissCount++;
                 }
                 return default(V);
             }
             
-            /// <summary>
-            /// Add Item in Cache. If you add same Key item then it would override the prev value
-            /// </summary>
-            /// <param name="key"></param>
-            /// <param name="val"></param>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void add(K key, V val)
-            {
-                if (cacheMap.TryGetValue(key, out var existingNode))
-                {
-                    lruList.Remove(existingNode);
-                }
-                else if (cacheMap.Count > capacity)
-                {
-                    RemoveFirst();
-                }
-
-                LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(key, val,null);
-                LinkedListNode<LRUCacheItem<K, V>> node = new LinkedListNode<LRUCacheItem<K, V>>(cacheItem);
-                lruList.AddLast(node);
-                cacheMap[key] = node;
-            }
+            
 
         /// <summary>
         /// Add Item in Cache. If you add same Key item then it would override the prev value
@@ -195,37 +190,23 @@ namespace Fin.CacheManager
         /// <param name="key"></param>
         /// <param name="val"></param>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public void add(K key, V val , CachePolicy cachePolicy)
+        public void add(K key, V val , CachePolicy cachePolicy = null)
         {
+            
             if (cacheMap.TryGetValue(key, out var existingNode))
             {
-                lruList.Remove(existingNode);
+                lruList.Remove(existingNode.key);
             }
-            else if (cacheMap.Count > capacity)
+            
+            LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(key, val, cachePolicy);
+            LinkedListNode<K> node = new LinkedListNode<K>(key);
+            lruList.AddLast(node);
+            cacheMap[key] = cacheItem;
+
+            if (cacheMap.Count > capacity)
             {
                 RemoveFirst();
             }
-
-            DateTime? expired;
-            switch (cachePolicy.CachePolicyType)
-            {
-                case CachePolicyType.None:
-                    expired = null;
-                    break;
-                case CachePolicyType.SlidingExpiration:
-                    expired = DateTime.Now.Add(cachePolicy.SlidingExpiration.Value);
-                    break;
-                case CachePolicyType.AbsoluteExpiration:
-                    expired = cachePolicy.SlidingExpirationUtc;
-                    break;
-                default:
-                    expired = null; break;
-;            }
-
-            LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(key, val, expired);
-            LinkedListNode<LRUCacheItem<K, V>> node = new LinkedListNode<LRUCacheItem<K, V>>(cacheItem);
-            lruList.AddLast(node);
-            cacheMap[key] = node;
         }
         /// <summary>
         /// Remove Key from Cache
@@ -233,38 +214,42 @@ namespace Fin.CacheManager
         /// <param name="key"></param>
         /// <returns></returns>
         public K remove(K key)
-            {
+        {
                 if (cacheMap.TryGetValue(key, out var existingNode))
                 {
-                    lruList.Remove(existingNode);
-                    cacheMap.TryRemove(key, out var linkedListNode);
-                    return linkedListNode.Value.key;
+                    lruList.Remove(existingNode.key);
+                    cacheMap.TryRemove(key, out var ItemNode);
+                    return ItemNode.key;
                 }
                 _logger?.Info("Key do not exist:" + key);
                 return default(K);
-            }
+        }
 
             /// <summary>
             /// Remove Item from cache and fire delegate
             /// </summary>
-            private void RemoveFirst()
-            {
-                LinkedListNode<LRUCacheItem<K, V>> node = lruList.First;
-                LinkedListNode<LRUCacheItem<K,V >> item = null; 
+        private void RemoveFirst()
+        {
+                LinkedListNode<K> node = lruList.First;
+                LRUCacheItem<K, V> cacheItem  = null; 
                 lruList.RemoveFirst();
 
-                if (cacheMap.TryRemove(node.Value.key, out item))
+                if (cacheMap.TryRemove(node.Value, out cacheItem))
                 {
-                    Console.WriteLine(cacheMap.Count);
-                    OnEviction?.Invoke(this, new EvictionArgs<K> { Key =  node.Value.key , EvictionReason = "Item count Exceeded"});
+                    //Console.WriteLine(cacheMap.Count);
+                    OnEviction?.Invoke(this, new EvictionArgs<K> { Key =  node.Value , EvictionReason = "Item count Exceeded"});
                 }
-            }
-
-            
         }
- 
         
 
         
-    
+
+
+
+    }
+
+
+
+
+
 }
