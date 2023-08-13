@@ -22,7 +22,7 @@ namespace LRUCacheApp
                 int r = random.Next(list.Count);
                 string item = r + "_" + "CacheItem";
                 
-                cache.add(r, item , new CachePolicy() { CachePolicyType = CachePolicyType.SlidingExpiration , SlidingExpiration = TimeSpan.FromSeconds(60) });
+                cache.add(r, item , new CachePolicy() { CachePolicyType = CachePolicyType.SlidingExpiration , SlidingExpiration = TimeSpan.FromSeconds(20) });
 
                 int r1 = random.Next(list.Count);
                 var itemget = cache.get(r1);

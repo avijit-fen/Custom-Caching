@@ -19,6 +19,8 @@ namespace Fin.CacheManager.Tests
         public void CacheTest_String()
         {
             var cache = LRUCache<int, string>.GetInstance(5);
+            cache.Clear();
+            cache.OnEviction += Eviction_Event;
 
             cache.add(1, "A");
             cache.add(2, "B");
@@ -27,7 +29,8 @@ namespace Fin.CacheManager.Tests
             cache.add(5, "E");
             cache.add(6, "F");
 
-            cache.OnEviction += Eviction_Event;
+            cache.OnEviction -= Eviction_Event;
+            
         }
 
         private void Eviction_Event(object sender, EvictionArgs<int> e)
@@ -39,6 +42,9 @@ namespace Fin.CacheManager.Tests
         public void CacheTest_Get()
         {
             var cache = LRUCache<int, string>.GetInstance(5);
+            cache.OnEviction += Eviction_Event1;
+
+            cache.Clear();
 
             cache.add(1, "A");
             cache.add(2, "B");
@@ -51,7 +57,8 @@ namespace Fin.CacheManager.Tests
 
             cache.add(6, "k");
 
-            cache.OnEviction += Eviction_Event1;
+            cache.OnEviction -= Eviction_Event1;
+
 
         }
 
@@ -64,6 +71,7 @@ namespace Fin.CacheManager.Tests
         public void CacheTest_Same_Key_Add()
         {
             var cache = LRUCache<int, string>.GetInstance(5);
+            cache.Clear();
 
             cache.add(1, "A");
             cache.add(2, "B");
@@ -79,6 +87,7 @@ namespace Fin.CacheManager.Tests
         public void CacheTest_Key_Remove()
         {
             var cache = LRUCache<int, string>.GetInstance(5);
+            cache.Clear();
 
             cache.add(1, "A");
             cache.add(2, "B");
@@ -95,6 +104,7 @@ namespace Fin.CacheManager.Tests
         public void CacheTest_Key_DoNot_Exist()
         {
             var cache = LRUCache<int, string>.GetInstance(5);
+            cache.Clear();
 
             var k = cache.get(100);
 
@@ -106,6 +116,7 @@ namespace Fin.CacheManager.Tests
         public void CacheTest_Sliding_Expiration()
         {
             var cache = LRUCache<int, string>.GetInstance(5);
+            cache.Clear();
 
             cache.add(1,"A",new CachePolicy() { CachePolicyType = CachePolicyType.SlidingExpiration , SlidingExpiration = TimeSpan.FromSeconds(120) });
             
@@ -114,6 +125,8 @@ namespace Fin.CacheManager.Tests
             Thread.Sleep(1000);
 
             var r = cache.get(1);
+
+            cache.OnEviction -= Eviction_Event2;
 
         }
 

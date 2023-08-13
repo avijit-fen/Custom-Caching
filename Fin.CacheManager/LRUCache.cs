@@ -29,13 +29,14 @@ namespace Fin.CacheManager
             private ILogger _logger;
             //subscribe to this event to know which key got evicted
             public EventHandler<EvictionArgs<K>> OnEviction;
-            private bool _disposed;
+            private object cache_lock = new object(); // Used to ensure thread-safe operations
+            
 
-            /// <summary>
-            /// Constructor
-            /// </summary>
-            /// <param name="capacity"></param>
-            LRUCache(int capacity)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="capacity"></param>
+        LRUCache(int capacity)
             {
                 this.capacity = capacity;
                 this.lruList = new LinkedList<K>();
@@ -150,20 +151,25 @@ namespace Fin.CacheManager
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        [MethodImpl(MethodImplOptions.Synchronized)]
+        
             public V get(K key)
             {
   
                 ThrowHelper.IfNullThrow(key);
-                LRUCacheItem<K,V> item;
+                
+                lock(cache_lock)
+                {
+                
+                LRUCacheItem<K, V> item;
                 if (cacheMap.TryGetValue(key, out item))
                 {
                     V value = item.value;
-                    if (item.IsExpired) { 
+                    if (item.IsExpired)
+                    {
                         remove(item.key);
                         OnEviction?.Invoke(this, new EvictionArgs<K> { Key = item.key, EvictionReason = "Item Expiry Exceeded" });
                         return default(V);
-                     }
+                    }
                     else
                     {
                         lruList.Remove(key);
@@ -182,6 +188,9 @@ namespace Fin.CacheManager
                     CacheStats.MissCount++;
                 }
                 return default(V);
+
+            }
+                
             }
             
             
@@ -191,33 +200,36 @@ namespace Fin.CacheManager
         /// </summary>
         /// <param name="key"></param>
         /// <param name="val"></param>
-        [MethodImpl(MethodImplOptions.Synchronized)]
         public void add(K key, V val , CachePolicy cachePolicy = null)
         {
-            
-            if (cacheMap.TryGetValue(key, out var existingNode))
+            lock (cache_lock)
             {
-                lruList.Remove(existingNode.key);
-            }
-            
-            LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(key, val, cachePolicy);
-            LinkedListNode<K> node = new LinkedListNode<K>(key);
-            lruList.AddLast(node);
-            cacheMap[key] = cacheItem;
+                if (cacheMap.TryGetValue(key, out var existingNode))
+                {
+                    lruList.Remove(existingNode.key);
+                }
 
-            if (cacheMap.Count > capacity)
-            {
-                RemoveFirst();
+                LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(key, val, cachePolicy);
+                LinkedListNode<K> node = new LinkedListNode<K>(key);
+                lruList.AddLast(node);
+                cacheMap[key] = cacheItem;
+
+                if (cacheMap.Count > capacity)
+                {
+                    RemoveFirst();
+                }
             }
+            
         }
         /// <summary>
         /// Remove Key from Cache
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        [MethodImpl(MethodImplOptions.Synchronized)]
         public K remove(K key)
         {
+            lock (cache_lock)
+            {
                 if (cacheMap.TryGetValue(key, out var existingNode))
                 {
                     lruList.Remove(existingNode.key);
@@ -226,11 +238,22 @@ namespace Fin.CacheManager
                 }
                 _logger?.Info("Key do not exist:" + key);
                 return default(K);
+            }
+                
         }
 
-            /// <summary>
-            /// Remove Item from cache and fire delegate
-            /// </summary>
+        public void Clear()
+        {
+            lock (cache_lock)
+            {
+                cacheMap.Clear();
+                lruList.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Remove Item from cache and fire delegate
+        /// </summary>
         private void RemoveFirst()
         {
                 LinkedListNode<K> node = lruList.First;
