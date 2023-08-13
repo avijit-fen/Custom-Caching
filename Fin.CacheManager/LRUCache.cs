@@ -157,39 +157,48 @@ namespace Fin.CacheManager
   
                 ThrowHelper.IfNullThrow(key);
                 
-                lock(cache_lock)
+                try
                 {
-                
-                LRUCacheItem<K, V> item;
-                if (cacheMap.TryGetValue(key, out item))
+                lock (cache_lock)
                 {
-                    V value = item.value;
-                    if (item.IsExpired)
+
+                    LRUCacheItem<K, V> item;
+                    if (cacheMap.TryGetValue(key, out item))
                     {
-                        remove(item.key);
-                        OnEviction?.Invoke(this, new EvictionArgs<K> { Key = item.key, EvictionReason = "Item Expiry Exceeded" });
-                        return default(V);
+                        V value = item.value;
+                        if (item.IsExpired)
+                        {
+                            remove(item.key);
+                            OnEviction?.Invoke(this, new EvictionArgs<K> { Key = item.key, EvictionReason = "Item Expiry Exceeded" });
+                            return default(V);
+                        }
+                        else
+                        {
+                            lruList.Remove(key);
+                            LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(item);
+                            cacheMap[key] = cacheItem;
+                            LinkedListNode<K> newnode = new LinkedListNode<K>(key);
+                            lruList.AddLast(newnode);
+                            _logger?.Info("Cache Hit:" + key);
+                            CacheStats.HitCount++;
+                            return value;
+                        }
                     }
                     else
                     {
-                        lruList.Remove(key);
-                        LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(item);
-                        cacheMap[key] = cacheItem;
-                        LinkedListNode<K> newnode = new LinkedListNode<K>(key);
-                        lruList.AddLast(newnode);
-                        _logger?.Info("Cache Hit:" + key);
-                        CacheStats.HitCount++;
-                        return value;
+                        _logger?.Info("Cache Miss:" + key);
+                        CacheStats.MissCount++;
                     }
-                }
-                else
-                {
-                    _logger?.Info("Cache Miss:" + key);
-                    CacheStats.MissCount++;
-                }
-                return default(V);
+                    return default(V);
 
+                }
             }
+                catch(Exception ex)
+                {
+                    throw new OperationCanceledException(ex.Message, ex);
+                }
+
+                
                 
             }
             
@@ -202,23 +211,31 @@ namespace Fin.CacheManager
         /// <param name="val"></param>
         public void add(K key, V val , CachePolicy cachePolicy = null)
         {
-            lock (cache_lock)
+            try
             {
-                if (cacheMap.TryGetValue(key, out var existingNode))
+                lock (cache_lock)
                 {
-                    lruList.Remove(existingNode.key);
-                }
+                    if (cacheMap.TryGetValue(key, out var existingNode))
+                    {
+                        lruList.Remove(existingNode.key);
+                    }
 
-                LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(key, val, cachePolicy);
-                LinkedListNode<K> node = new LinkedListNode<K>(key);
-                lruList.AddLast(node);
-                cacheMap[key] = cacheItem;
+                    LRUCacheItem<K, V> cacheItem = new LRUCacheItem<K, V>(key, val, cachePolicy);
+                    LinkedListNode<K> node = new LinkedListNode<K>(key);
+                    lruList.AddLast(node);
+                    cacheMap[key] = cacheItem;
 
-                if (cacheMap.Count > capacity)
-                {
-                    RemoveFirst();
+                    if (cacheMap.Count > capacity)
+                    {
+                        RemoveFirst();
+                    }
                 }
             }
+            catch(Exception ex)
+            {
+                throw new OperationCanceledException(ex.Message, ex);
+            }
+            
             
         }
         /// <summary>
@@ -228,27 +245,44 @@ namespace Fin.CacheManager
         /// <returns></returns>
         public K remove(K key)
         {
-            lock (cache_lock)
+            try
             {
-                if (cacheMap.TryGetValue(key, out var existingNode))
+                lock (cache_lock)
                 {
-                    lruList.Remove(existingNode.key);
-                    cacheMap.TryRemove(key, out var ItemNode);
-                    return ItemNode.key;
+                    if (cacheMap.TryGetValue(key, out var existingNode))
+                    {
+                        lruList.Remove(existingNode.key);
+                        cacheMap.TryRemove(key, out var ItemNode);
+                        return ItemNode.key;
+                    }
+                    _logger?.Info("Key do not exist:" + key);
+                    return default(K);
                 }
-                _logger?.Info("Key do not exist:" + key);
-                return default(K);
             }
+            catch (Exception ex)
+            {
+                throw new OperationCanceledException(ex.Message, ex);
+            }
+            
                 
         }
 
         public void Clear()
         {
-            lock (cache_lock)
+            try
             {
-                cacheMap.Clear();
-                lruList.Clear();
+                lock (cache_lock)
+                {
+                    cacheMap.Clear();
+                    lruList.Clear();
+                }
             }
+            catch(Exception ex)
+            {
+                throw new OperationCanceledException(ex.Message, ex);
+            }
+
+            
         }
 
         /// <summary>
