@@ -26,8 +26,10 @@ namespace Fin.CacheManager
             value = cacheItem.value;
             CachePolicyItem = cacheItem.CachePolicyItem; 
             InternalKey = cacheItem.InternalKey;
+            cacheStatus = cacheItem.cacheStatus;
             setExpiry(CachePolicyItem);
         }
+        
         public K key;
         public V value;
         public DateTime? Expired { private set; get; }
@@ -78,6 +80,7 @@ namespace Fin.CacheManager
         }
     }
 
+    
 
     public static class CacheStats
     {

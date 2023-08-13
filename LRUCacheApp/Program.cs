@@ -29,9 +29,6 @@ namespace LRUCacheApp
                 Console.WriteLine(itemget + " at: " + r1);
 
             });
-
-            
-            
             Console.ReadLine();
 
         }

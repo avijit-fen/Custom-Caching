@@ -47,7 +47,7 @@ namespace Fin.CacheManager
                         {
                             DeleteIfExpired();
 
-                        }, 20, cts);
+                        }, Config.PollingInterval, cts);
             }
             /// <summary>
             /// Overloaded Constuctor with Logger , use dependency injection to implement your logger
@@ -66,7 +66,7 @@ namespace Fin.CacheManager
                         {
                             DeleteIfExpired();
 
-                        }, 20, cts);
+                        }, Config.PollingInterval, cts);
 
             }
             /// <summary>
