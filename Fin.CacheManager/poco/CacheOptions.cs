@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fin.CacheManager
+namespace Fin.CacheManager.POCO
 {
     public class CachePolicy : ICachePolicy
     {

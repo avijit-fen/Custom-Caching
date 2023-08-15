@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using Fin.CacheManager.Events;
+using Fin.CacheManager.POCO;
 
 namespace Fin.CacheManager.Tests
 {

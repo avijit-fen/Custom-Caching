@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fin.CacheManager
+namespace Fin.CacheManager.POCO
 {
     internal class LRUCacheItem<K, V>
     {

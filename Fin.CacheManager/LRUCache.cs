@@ -1,5 +1,6 @@
 ﻿using Fin.CacheManager.Events;
 using Fin.CacheManager.Interface;
+using Fin.CacheManager.POCO;
 using Fin.Logger;
 using System;
 using System.Collections.Concurrent;
