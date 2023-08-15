@@ -1,4 +1,5 @@
 ﻿using Fin.CacheManager;
+using Fin.CacheManager.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;

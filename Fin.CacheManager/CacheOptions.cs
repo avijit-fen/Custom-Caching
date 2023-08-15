@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Fin.CacheManager
 {
-    public class CachePolicy
+    public class CachePolicy : ICachePolicy
     {
         public CachePolicy() { }
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fin.CacheManager
+namespace Fin.CacheManager.Events
 {
     /// <summary>
     /// This class used for eviction event args

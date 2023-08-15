@@ -47,9 +47,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CacheEventArgs.cs" />
+    <Compile Include="Events\CacheEventArgs.cs" />
     <Compile Include="CacheOptions.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="Interface\ICache.cs" />
+    <Compile Include="Interface\ICachePolicy.cs" />
     <Compile Include="LRUCache.cs" />
     <Compile Include="LRUCacheItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

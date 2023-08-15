@@ -9,7 +9,7 @@ namespace Fin.CacheManager
 {
     internal class LRUCacheItem<K, V>
     {
-        public LRUCacheItem(K k, V v, CachePolicy cachePolicy)
+        public LRUCacheItem(K k, V v, ICachePolicy cachePolicy)
         {
             
             key = k;
@@ -35,9 +35,9 @@ namespace Fin.CacheManager
         public DateTime? AbsoluteExpired { private set;get; }
         public Guid? InternalKey { private set; get; }
 
-        public CachePolicy CachePolicyItem;
+        public ICachePolicy CachePolicyItem;
 
-        private void setExpiry(CachePolicy cachePolicy)
+        private void setExpiry(ICachePolicy cachePolicy)
         {
             if(cachePolicy == null) { return; }
             switch (cachePolicy.CachePolicyType) { 

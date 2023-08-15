@@ -1,4 +1,6 @@
-﻿using Fin.Logger;
+﻿using Fin.CacheManager.Events;
+using Fin.CacheManager.Interface;
+using Fin.Logger;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,13 +15,14 @@ using System.Xml.Linq;
 namespace Fin.CacheManager
 {
         /// <summary>
-        /// Main singleton Cache class 
+        /// Main singleton Cache class with cluster
         /// </summary>
         /// <typeparam name="K"></typeparam>
         /// <typeparam name="V"></typeparam>
-        public class LRUCache<K, V>
+        public class LRUCache<K, V> : ICache<K, V> where K : IComparable
         {
             private int capacity;
+            
             //concurrent dictionary to store cache object
             private ConcurrentDictionary<K, LRUCacheItem<K, V>> cacheMap = new ConcurrentDictionary<K, LRUCacheItem<K, V>>();
             // Linked list used to track LRU algorithm
@@ -209,7 +212,7 @@ namespace Fin.CacheManager
         /// </summary>
         /// <param name="key"></param>
         /// <param name="val"></param>
-        public void add(K key, V val , CachePolicy cachePolicy = null)
+        public void add(K key, V val , ICachePolicy cachePolicy = null)
         {
             try
             {
